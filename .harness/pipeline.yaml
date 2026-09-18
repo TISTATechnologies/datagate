@@ -1,142 +1,59 @@
-# Harness pipeline stub — mirrors GitHub Actions / tools/ci-local.sh / deploy-local.sh.
-# Port this into a Harness project when org access is available.
-# Until then, run locally:
-#   ./tools/deploy-local.sh
-#   ./tools/ci-local.sh all
+# Harness CI pipeline for DataGate (Harness Cloud — first run).
+# Git Experience YAML path (relative to repo root): .harness/pipeline.yaml
+# Do NOT paste a github.com/.../blob/... URL into "YAML Path".
 #
-# Stages (see docs/playerzero-harness.md):
-#   1. validate-workflows
-#   2. build + unit tests
-#   3. security
-#   4. gate-smoke
-#   5. sdlc-pack
-#   6. deploy (tools/deploy-local.sh)
-#   7. playerzero-notify (optional; incidents via non-SN only — prefer ServiceNow)
+# Prerequisites:
+#   1. Connector datagate_github with API access enabled (same PAT secret).
+#   2. Connect through Harness Platform (required for Harness Cloud).
+# Smoke/deploy need Docker on a Delegate — omitted here on purpose.
 
 pipeline:
   name: datagate-ci
-  identifier: datagate_ci
+  identifier: datagateci
   projectIdentifier: datagate
   orgIdentifier: default
   tags:
     product: datagate
-    mirror: github-actions
+  properties:
+    ci:
+      codebase:
+        connectorRef: datagate_github
+        repoName: datagate
+        build: <+input>
   stages:
     - stage:
-        name: Validate workflows
-        identifier: validate_workflows
-        description: Elsa workflow JSON must have definitionId, name, root
+        name: Validate and unit
+        identifier: validate_and_unit
+        description: Workflow JSON + domain unit tests (no Docker)
         type: CI
         spec:
           cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
           execution:
             steps:
               - step:
                   type: Run
-                  name: jq validate
-                  identifier: jq_validate
+                  name: chmod tools
+                  identifier: chmod_tools
+                  spec:
+                    shell: Sh
+                    command: chmod +x tools/*.sh
+              - step:
+                  type: Run
+                  name: validate workflows
+                  identifier: validate
                   spec:
                     shell: Sh
                     command: ./tools/ci-local.sh validate
-
-    - stage:
-        name: Build and unit tests
-        identifier: build_unit
-        description: Domain policy + PromotionRequest tests (no Docker)
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
               - step:
                   type: Run
-                  name: unit
+                  name: unit tests
                   identifier: unit
                   spec:
                     shell: Sh
                     command: ./tools/ci-local.sh unit
-
-    - stage:
-        name: Security
-        identifier: security
-        description: Trivy fs / NuGet vulnerable list
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: security
-                  identifier: security_scan
-                  spec:
-                    shell: Sh
-                    command: ./tools/ci-local.sh security
-
-    - stage:
-        name: Gate smoke
-        identifier: gate_smoke
-        description: Compose stack + clean/dirty simulate against API
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: smoke
-                  identifier: smoke
-                  spec:
-                    shell: Sh
-                    command: ./tools/ci-local.sh smoke
-
-    - stage:
-        name: SDLC pack
-        identifier: sdlc_pack
-        description: Bundle docs + test results for auditors
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: sdlc
-                  identifier: sdlc
-                  spec:
-                    shell: Sh
-                    command: ./tools/ci-local.sh sdlc
-
-    - stage:
-        name: Deploy demo
-        identifier: deploy_demo
-        description: Compose up --build, seed Elsa, leave stack running on the delegate
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: deploy
-                  identifier: deploy
-                  spec:
-                    shell: Sh
-                    command: ./tools/deploy-local.sh
-
-    - stage:
-        name: PlayerZero notify
-        identifier: playerzero_notify
-        description: Optional API Trigger (skip if unset; incidents prefer ServiceNow→PlayerZero)
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: notify
-                  identifier: notify
-                  spec:
-                    shell: Sh
-                    command: ./tools/playerzero-notify.sh

@@ -4,7 +4,13 @@
 insight) — not for gold promotion. Prefer **ServiceNow → PlayerZero** over
 firing API Triggers on every deploy.
 
-GitHub Actions can stay as a temporary PR gate until Harness CI is live.
+| Live link | Status |
+|---|---|
+| GitHub | https://github.com/TISTATechnologies/datagate |
+| [Harness project `datagate`](https://app.harness.io/ng/account/w3CIbHK_T-yjEpzKqD-uuA/all/orgs/default/projects/datagate/overview) | Project up (`orgs/default`) |
+| PlayerZero | Repo loaded / ingesting |
+
+GitHub Actions can stay as a temporary PR gate until the first Harness CI run is green.
 
 ---
 
@@ -14,7 +20,7 @@ GitHub Actions can stay as a temporary PR gate until Harness CI is live.
 |---|---|---|
 | Build, test, scan, smoke, deploy | **Harness** | `.harness/pipeline.yaml` → `./tools/ci-local.sh` / `deploy-local.sh` |
 | Code index (so agents know this repo) | **PlayerZero** | GitHub App + `.pzignore` |
-| **Incidents** | **ServiceNow → PlayerZero** | PlayerZero ServiceNow connector; triage / debug with code context |
+| **Incidents** | **ServiceNow → PlayerZero** | PlayerZero ServiceNow connector |
 | Gold promote / steward approve | **Elsa + DataGate API** | Never PlayerZero / ServiceNow |
 
 ```text
@@ -23,37 +29,38 @@ Harness CI/CD
                                                     (no PlayerZero required)
 
 Incidents (primary PlayerZero path)
-  ServiceNow incident opened / updated
-       → PlayerZero connector (read / triage / work notes)
+  ServiceNow incident
+       → PlayerZero connector
        → AI investigation against this repo’s code
-
-Optional only
-  External system POST → PlayerZero API Trigger  (if SN isn’t the source)
 ```
-
-**API Trigger:** useful when something *outside* ServiceNow must start a PlayerZero
-Channel (pager webhook, custom monitor). For “incidents only,” the ServiceNow
-connector is the better default — tickets stay the system of record.
 
 ---
 
-## Setup checklist
+## Done vs next
 
-### 1. PlayerZero + ServiceNow (incidents)
+### Done
+- [x] Repo on GitHub (`TISTATechnologies/datagate`)
+- [x] PlayerZero: repo loaded
+- [x] Harness: project `datagate` created
 
-1. Create a PlayerZero project; [import this GitHub repo](https://playerzero.ai/docs/developer-guide/configuration-guides/importing-code/github); set primary branch.
-2. Settings → Context → Ticketing → **Connect ServiceNow**; grant the DataGate project access.
-3. Map a PlayerZero workflow for incident triage (read incident → investigate code → work notes).
-4. Skip API Triggers unless a non-ServiceNow source must open Channels.
+### Next in Harness (wire delivery)
 
-### 2. Harness (delivery)
+1. **Connect codebase** — Project Settings → Code Repo / GitHub connector → `TISTATechnologies/datagate`, branch `main`.
+2. **Install a Delegate** that can run Docker Compose (laptop/VM where you demo is fine for now).
+3. **Create pipeline** from [`.harness/pipeline.yaml`](../.harness/pipeline.yaml)  
+   Identifiers already match: `orgIdentifier: default`, `projectIdentifier: datagate`, pipeline `datagate_ci`.
+4. **Infrastructure** — point CI stages at Harness Cloud **or** the Delegate; deploy/smoke need Docker on the Delegate.
+5. **Run once** — confirm stages call:
+   - `./tools/ci-local.sh validate|unit|security|smoke|sdlc`
+   - `./tools/deploy-local.sh`
+6. **Trigger** — webhook / push to `main` (and optionally PRs).
+7. Do **not** require `PLAYERZERO_TRIGGER_TOKEN` for a green deploy.
 
-1. Project `datagate`, import `.harness/pipeline.yaml`, Delegate with Docker.
-2. Stages call `./tools/ci-local.sh <stage>` and `./tools/deploy-local.sh`.
-3. Do **not** require `PLAYERZERO_TRIGGER_TOKEN` for a green deploy.
-4. Trigger on PR / push to `main`.
+### Next in PlayerZero (incidents)
 
-Until Harness is connected: GitHub Actions + `./tools/ci-local.sh` (same stages).
+1. Confirm ingest finished; primary branch = `main`.
+2. Settings → Context → Ticketing → **Connect ServiceNow**; grant this project.
+3. Optional: PR reviews / code sims — not required for the incident story.
 
 ---
 
@@ -61,16 +68,16 @@ Until Harness is connected: GitHub Actions + `./tools/ci-local.sh` (same stages)
 
 | Path | Role |
 |---|---|
-| `.harness/pipeline.yaml` | CI + deploy; notify stage optional / skippable |
-| `.pzignore` | Keep `.env` / secrets out of ingest |
-| `tools/playerzero-notify.sh` | Optional API Trigger helper (non-SN sources only) |
-| `tools/ci-local.sh` | Commands Harness Run steps call |
+| `.harness/pipeline.yaml` | Import into Harness project `datagate` |
+| `.pzignore` | Keep `.env` / secrets out of PlayerZero ingest |
+| `tools/playerzero-notify.sh` | Optional API Trigger only (non-SN sources) |
+| `tools/ci-local.sh` | Same commands Harness Run steps should call |
 
 ---
 
 ## Success criteria
 
-1. Repo indexed in PlayerZero.
-2. ServiceNow incident in scope → PlayerZero can triage / comment with DataGate code context.
-3. Harness (or Actions) green on `./tools/ci-local.sh all` **without** PlayerZero.
+1. PlayerZero shows this repo indexed.
+2. Harness pipeline run green on validate → unit (smoke/deploy once Delegate has Docker).
+3. ServiceNow incident → PlayerZero can triage with DataGate code context.
 4. Elsa gate still proves clean → gold / dirty → pending.
