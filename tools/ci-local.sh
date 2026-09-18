@@ -42,6 +42,10 @@ stage_validate() {
 
 stage_unit() {
   echo "======== build + unit tests ========"
+  # Harness Cloud images lack net10; install into ~/.dotnet then prefer it on PATH.
+  ./tools/ensure-dotnet-sdk.sh
+  export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
+  export PATH="${DOTNET_ROOT}:${DOTNET_ROOT}/tools:${PATH}"
   ./tools/bootstrap.sh
   dotnet test test/DataGate.Domain.Tests --no-build -c Release \
     --logger trx --results-directory TestResults
