@@ -1,0 +1,27 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <!-- Pin every version. ABP is on the 10.x line and Elsa on 3.7.x; mixing an
+       older tutorial's versions with current packages is the usual way these
+       projects break before they start. Bump deliberately, in a PR. -->
+  <ItemGroup>
+    <PackageVersion Include="Volo.Abp.Core" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.Ddd.Domain" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.Ddd.Application" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.Ddd.Application.Contracts" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.Authorization" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.Autofac" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.AspNetCore.Mvc" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.EntityFrameworkCore" Version="10.6.0" />
+    <PackageVersion Include="Volo.Abp.EntityFrameworkCore.SqlServer" Version="10.6.0" />
+    <PackageVersion Include="Elsa" Version="3.7.0" />
+    <PackageVersion Include="Elsa.Workflows.Core" Version="3.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="Shouldly" Version="4.2.1" />
+  </ItemGroup>
+</Project>

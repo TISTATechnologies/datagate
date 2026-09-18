@@ -1,0 +1,66 @@
+# Local stack: SQL Server + Elsa 3 + ABP HttpApi host (steward UI + gate APIs).
+# Start:  docker compose --env-file .env -f deploy/docker-compose.yml up -d --build
+# Studio: http://localhost:13000   (admin / password)
+# Steward UI: http://localhost:5001
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: datagate-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD:-DataGateStrongPass789}
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  api:
+    build:
+      context: ..
+      dockerfile: src/DataGate.HttpApi.Host/Dockerfile
+    container_name: datagate-api
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=sqlserver;Database=DataGate;User Id=sa;Password=${DB_PASSWORD:-DataGateStrongPass789};TrustServerCertificate=True"
+      Elsa__BaseUrl: http://elsa:8080
+      Elsa__UserName: admin
+      Elsa__Password: password
+    ports:
+      - "5001:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/app/promotion/pending-list || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  elsa:
+    image: elsaworkflows/elsa-server-and-studio-v3:latest
+    container_name: datagate-elsa
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 8080
+      HTTP__BASEURL: http://localhost:13000
+      HTTP__BASEPATH: /workflows
+    ports:
+      - "13000:8080"
+    restart: unless-stopped
+
+volumes:
+  sqldata:

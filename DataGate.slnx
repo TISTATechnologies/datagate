@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DataGate.Application.Contracts/DataGate.Application.Contracts.csproj" />
+    <Project Path="src/DataGate.Application/DataGate.Application.csproj" />
+    <Project Path="src/DataGate.Domain.Shared/DataGate.Domain.Shared.csproj" />
+    <Project Path="src/DataGate.Domain/DataGate.Domain.csproj" />
+    <Project Path="src/DataGate.EntityFrameworkCore/DataGate.EntityFrameworkCore.csproj" />
+    <Project Path="src/DataGate.HttpApi.Host/DataGate.HttpApi.Host.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/DataGate.Domain.Tests/DataGate.Domain.Tests.csproj" />
+    <Project Path="test/DataGate.Workflow.Tests/DataGate.Workflow.Tests.csproj" />
+  </Folder>
+  <Folder Name="/workflow/">
+    <Project Path="workflow/DataGate.Workflow.Activities/DataGate.Workflow.Activities.csproj" />
+  </Folder>
+</Solution>

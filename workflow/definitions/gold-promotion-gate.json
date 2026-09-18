@@ -1,0 +1,191 @@
+{
+  "definitionId": "gold-promotion-gate",
+  "name": "Gold Promotion Gate",
+  "description": "Orchestrates promotion: calls DelegationOfAuthorityPolicy via the gate API, then auto-promotes or waits for a steward.",
+  "version": 1,
+  "isLatest": true,
+  "isPublished": true,
+  "variables": [
+    {
+      "id": "var-request-body",
+      "name": "RequestBody",
+      "typeName": "Object",
+      "isArray": false
+    },
+    {
+      "id": "var-decision",
+      "name": "Decision",
+      "typeName": "Object",
+      "isArray": false
+    }
+  ],
+  "root": {
+    "type": "Elsa.Flowchart",
+    "version": 1,
+    "id": "Flowchart1",
+    "activities": [
+      {
+        "id": "Trigger",
+        "name": "Trigger",
+        "type": "Elsa.HttpEndpoint",
+        "version": 1,
+        "path": {
+          "typeName": "String",
+          "expression": { "type": "Literal", "value": "quality-gate" }
+        },
+        "supportedMethods": {
+          "typeName": "String[]",
+          "expression": { "type": "Object", "value": "[\"POST\"]" }
+        },
+        "parsedContent": {
+          "typeName": "Object",
+          "memoryReference": { "id": "var-request-body" }
+        },
+        "customProperties": {
+          "canStartWorkflow": true,
+          "runAsynchronously": false
+        }
+      },
+      {
+        "id": "CallGate",
+        "name": "CallGate",
+        "type": "Elsa.FlowSendHttpRequest",
+        "version": 1,
+        "url": {
+          "typeName": "String",
+          "expression": {
+            "type": "Literal",
+            "value": "http://api:8080/api/app/promotion/evaluate"
+          }
+        },
+        "method": {
+          "typeName": "String",
+          "expression": { "type": "Literal", "value": "POST" }
+        },
+        "content": {
+          "typeName": "Object",
+          "expression": {
+            "type": "JavaScript",
+            "value": "Object.assign({}, getVariable('RequestBody'), { workflowInstanceId: getWorkflowInstanceId() })"
+          }
+        },
+        "contentType": {
+          "typeName": "String",
+          "expression": { "type": "Literal", "value": "application/json" }
+        },
+        "expectedStatusCodes": {
+          "typeName": "Int32[]",
+          "expression": { "type": "Object", "value": "[200]" }
+        },
+        "parsedContent": {
+          "typeName": "Object",
+          "memoryReference": { "id": "var-decision" }
+        }
+      },
+      {
+        "id": "NeedsHuman",
+        "name": "NeedsHuman",
+        "type": "Elsa.FlowDecision",
+        "version": 1,
+        "condition": {
+          "typeName": "Boolean",
+          "expression": {
+            "type": "JavaScript",
+            "value": "var d = getVariable('Decision'); return !!(d && d.requiresHuman);"
+          }
+        }
+      },
+      {
+        "id": "AutoPromote",
+        "name": "AutoPromote",
+        "type": "Elsa.WriteHttpResponse",
+        "version": 1,
+        "statusCode": {
+          "typeName": "System.Net.HttpStatusCode, System.Net.Primitives",
+          "expression": { "type": "Literal", "value": "OK" }
+        },
+        "content": {
+          "typeName": "Object",
+          "expression": {
+            "type": "JavaScript",
+            "value": "({ status: 'auto-promoted', runId: getVariable('Decision').runId, reason: getVariable('Decision').reasonSummary })"
+          }
+        },
+        "contentType": {
+          "typeName": "String",
+          "expression": { "type": "Literal", "value": "application/json" }
+        }
+      },
+      {
+        "id": "ParkedResponse",
+        "name": "ParkedResponse",
+        "type": "Elsa.WriteHttpResponse",
+        "version": 1,
+        "statusCode": {
+          "typeName": "System.Net.HttpStatusCode, System.Net.Primitives",
+          "expression": { "type": "Literal", "value": "Accepted" }
+        },
+        "content": {
+          "typeName": "Object",
+          "expression": {
+            "type": "JavaScript",
+            "value": "({ status: 'awaiting-steward', requestId: getVariable('Decision').id, runId: getVariable('Decision').runId, workflowInstanceId: getWorkflowInstanceId(), requiredTier: getVariable('Decision').requiredTier, requiredApprovals: getVariable('Decision').requiredApprovals, reason: getVariable('Decision').reasonSummary })"
+          }
+        },
+        "contentType": {
+          "typeName": "String",
+          "expression": { "type": "Literal", "value": "application/json" }
+        }
+      },
+      {
+        "id": "AwaitSteward",
+        "name": "AwaitSteward",
+        "type": "Elsa.Event",
+        "version": 1,
+        "eventName": {
+          "typeName": "String",
+          "expression": { "type": "Literal", "value": "StewardDecision" }
+        }
+      },
+      {
+        "id": "ApprovedPromote",
+        "name": "ApprovedPromote",
+        "type": "Elsa.WriteLine",
+        "version": 1,
+        "text": {
+          "typeName": "String",
+          "expression": {
+            "type": "Literal",
+            "value": "Steward approved - promoting to gold with an audited override."
+          }
+        }
+      }
+    ],
+    "connections": [
+      {
+        "source": { "activity": "Trigger", "port": "Done" },
+        "target": { "activity": "CallGate", "port": "In" }
+      },
+      {
+        "source": { "activity": "CallGate", "port": "200" },
+        "target": { "activity": "NeedsHuman", "port": "In" }
+      },
+      {
+        "source": { "activity": "NeedsHuman", "port": "False" },
+        "target": { "activity": "AutoPromote", "port": "In" }
+      },
+      {
+        "source": { "activity": "NeedsHuman", "port": "True" },
+        "target": { "activity": "ParkedResponse", "port": "In" }
+      },
+      {
+        "source": { "activity": "ParkedResponse", "port": "Done" },
+        "target": { "activity": "AwaitSteward", "port": "In" }
+      },
+      {
+        "source": { "activity": "AwaitSteward", "port": "Done" },
+        "target": { "activity": "ApprovedPromote", "port": "In" }
+      }
+    ]
+  }
+}

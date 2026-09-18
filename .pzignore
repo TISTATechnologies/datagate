@@ -1,0 +1,11 @@
+# PlayerZero ingest exclusions (patterns already in .gitignore need not be repeated).
+# https://playerzero.ai/docs/developer-guide/security/omitting-files-with-pzignore
+
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+**/secrets/
+**/credentials*.json
+**/appsettings.*.local.json

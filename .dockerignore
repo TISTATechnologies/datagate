@@ -1,0 +1,9 @@
+**/bin
+**/obj
+**/.git
+**/.github
+**/node_modules
+**/.vs
+**/.idea
+**/*.user
+.env

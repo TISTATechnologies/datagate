@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Application.Contracts" />
+    <ProjectReference Include="..\DataGate.Domain.Shared\DataGate.Domain.Shared.csproj" />
+  </ItemGroup>
+</Project>

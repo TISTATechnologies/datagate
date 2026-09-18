@@ -1,0 +1,142 @@
+# Harness pipeline stub — mirrors GitHub Actions / tools/ci-local.sh / deploy-local.sh.
+# Port this into a Harness project when org access is available.
+# Until then, run locally:
+#   ./tools/deploy-local.sh
+#   ./tools/ci-local.sh all
+#
+# Stages (see docs/playerzero-harness.md):
+#   1. validate-workflows
+#   2. build + unit tests
+#   3. security
+#   4. gate-smoke
+#   5. sdlc-pack
+#   6. deploy (tools/deploy-local.sh)
+#   7. playerzero-notify (optional; incidents via non-SN only — prefer ServiceNow)
+
+pipeline:
+  name: datagate-ci
+  identifier: datagate_ci
+  projectIdentifier: datagate
+  orgIdentifier: default
+  tags:
+    product: datagate
+    mirror: github-actions
+  stages:
+    - stage:
+        name: Validate workflows
+        identifier: validate_workflows
+        description: Elsa workflow JSON must have definitionId, name, root
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: jq validate
+                  identifier: jq_validate
+                  spec:
+                    shell: Sh
+                    command: ./tools/ci-local.sh validate
+
+    - stage:
+        name: Build and unit tests
+        identifier: build_unit
+        description: Domain policy + PromotionRequest tests (no Docker)
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: unit
+                  identifier: unit
+                  spec:
+                    shell: Sh
+                    command: ./tools/ci-local.sh unit
+
+    - stage:
+        name: Security
+        identifier: security
+        description: Trivy fs / NuGet vulnerable list
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: security
+                  identifier: security_scan
+                  spec:
+                    shell: Sh
+                    command: ./tools/ci-local.sh security
+
+    - stage:
+        name: Gate smoke
+        identifier: gate_smoke
+        description: Compose stack + clean/dirty simulate against API
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: smoke
+                  identifier: smoke
+                  spec:
+                    shell: Sh
+                    command: ./tools/ci-local.sh smoke
+
+    - stage:
+        name: SDLC pack
+        identifier: sdlc_pack
+        description: Bundle docs + test results for auditors
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: sdlc
+                  identifier: sdlc
+                  spec:
+                    shell: Sh
+                    command: ./tools/ci-local.sh sdlc
+
+    - stage:
+        name: Deploy demo
+        identifier: deploy_demo
+        description: Compose up --build, seed Elsa, leave stack running on the delegate
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: deploy
+                  identifier: deploy
+                  spec:
+                    shell: Sh
+                    command: ./tools/deploy-local.sh
+
+    - stage:
+        name: PlayerZero notify
+        identifier: playerzero_notify
+        description: Optional API Trigger (skip if unset; incidents prefer ServiceNow→PlayerZero)
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: notify
+                  identifier: notify
+                  spec:
+                    shell: Sh
+                    command: ./tools/playerzero-notify.sh

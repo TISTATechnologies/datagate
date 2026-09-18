@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Application" />
+    <PackageReference Include="Volo.Abp.Authorization" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <ProjectReference Include="..\DataGate.Domain\DataGate.Domain.csproj" />
+    <ProjectReference Include="..\DataGate.EntityFrameworkCore\DataGate.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\DataGate.Application.Contracts\DataGate.Application.Contracts.csproj" />
+  </ItemGroup>
+</Project>

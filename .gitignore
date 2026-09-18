@@ -1,0 +1,22 @@
+# Secrets / local env
+.env
+*.user
+appsettings.Development.json
+
+# .NET build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+TestResults/
+*.trx
+
+# IDEs
+.idea/
+.vs/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

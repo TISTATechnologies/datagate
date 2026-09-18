@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.SqlServer" />
+    <ProjectReference Include="..\DataGate.Domain\DataGate.Domain.csproj" />
+  </ItemGroup>
+</Project>

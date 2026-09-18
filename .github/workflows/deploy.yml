@@ -1,0 +1,53 @@
+# Continuous deploy verification for the demo stack.
+# Uses the same script as a workstation: tools/deploy-local.sh
+#
+# - workflow_dispatch: run anytime (optional keep_stack for self-hosted runners)
+# - push to main: verify deploy path after CI build/security (ephemeral on GitHub-hosted)
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_smoke:
+        description: Run gate-smoke after seed
+        type: boolean
+        default: true
+      keep_stack:
+        description: Leave compose running (only useful on self-hosted runners)
+        type: boolean
+        default: false
+  push:
+    branches: [ main ]
+
+env:
+  DB_PASSWORD: CiStrongPass789
+
+jobs:
+  deploy:
+    name: Deploy compose + seed
+    runs-on: ubuntu-latest
+    # On PRs we do not deploy; main push + manual dispatch only.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare .env
+        run: |
+          cp .env.example .env
+          sed -i.bak "s/^DB_PASSWORD=.*/DB_PASSWORD=${DB_PASSWORD}/" .env || \
+            echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
+      - name: Deploy
+        env:
+          RUN_SMOKE: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_smoke == false) && '0' || '1' }}
+          SEED: "1"
+        run: |
+          chmod +x tools/deploy-local.sh tools/seed-workflows.sh tools/gate-smoke.sh
+          ./tools/deploy-local.sh
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose --env-file .env -f deploy/docker-compose.yml logs --no-color
+      - name: Tear down (GitHub-hosted runners are ephemeral)
+        if: always() && (github.event_name != 'workflow_dispatch' || inputs.keep_stack == false)
+        run: docker compose --env-file .env -f deploy/docker-compose.yml down -v
+      - name: Keep stack note
+        if: github.event_name == 'workflow_dispatch' && inputs.keep_stack == true
+        run: echo "keep_stack=true — stack left up on this runner (self-hosted only)."

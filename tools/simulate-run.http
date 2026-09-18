@@ -1,0 +1,56 @@
+### Clean run - should auto-promote with no human involved
+POST http://localhost:13000/workflows/quality-gate
+Content-Type: application/json
+
+{
+  "runId": "run-2026-09-17-001",
+  "table": "silver.claims",
+  "rowCount": 1048221,
+  "rowCountDriftPct": 0.4,
+  "nullRatePct": 0.2,
+  "newColumns": [],
+  "financialExposure": 40000,
+  "containsSensitiveData": false,
+  "isRegulatoryReporting": false
+}
+
+### Failing run - should suspend and wait for a steward (policy: drift + PII + $3M)
+# Then open steward UI — no Elsa instance paste needed. Approve twice with different approver ids.
+POST http://localhost:13000/workflows/quality-gate
+Content-Type: application/json
+
+{
+  "runId": "run-2026-09-17-002",
+  "table": "silver.claims",
+  "rowCount": 412008,
+  "rowCountDriftPct": 61.7,
+  "nullRatePct": 14.3,
+  "newColumns": ["member_ssn"],
+  "financialExposure": 3000000,
+  "containsSensitiveData": true,
+  "isRegulatoryReporting": true
+}
+
+### List pending (steward UI source)
+GET http://localhost:5001/api/app/promotion/pending-list
+
+### Approve #1 (two-person rule - not enough alone)
+# Replace {id} with the request id from pending-list (field "id").
+POST http://localhost:5001/api/app/promotion/{{id}}/approve
+Content-Type: application/json
+
+{
+  "approverId": "11111111-1111-1111-1111-111111111111",
+  "approverTier": 3,
+  "comment": "checked lineage"
+}
+
+### Approve #2 (reaches requiredApprovals=2)
+POST http://localhost:5001/api/app/promotion/{{id}}/approve
+Content-Type: application/json
+
+{
+  "approverId": "22222222-2222-2222-2222-222222222222",
+  "approverTier": 3,
+  "comment": "privacy reviewed"
+}

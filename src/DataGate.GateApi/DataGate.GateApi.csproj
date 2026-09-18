@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\DataGate.Domain\DataGate.Domain.csproj" />
+  </ItemGroup>
+</Project>

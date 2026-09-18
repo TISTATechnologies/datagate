@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DataGate Steward</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=3" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <header class="hero">
+    <p class="kicker">Silver → gold promotion gate</p>
+    <h1 class="brand">DataGate</h1>
+    <p class="lede">Post a run, approve risk, and see what made it to gold.</p>
+  </header>
+
+  <main>
+    <nav class="tabs" role="tablist" aria-label="Console sections">
+      <button type="button" role="tab" class="tab" data-tab="post" aria-selected="true">Post run</button>
+      <button type="button" role="tab" class="tab" data-tab="approvals" aria-selected="false">Approvals</button>
+      <button type="button" role="tab" class="tab" data-tab="gold" aria-selected="false">Gold</button>
+    </nav>
+
+    <section id="panel-post" class="panel" role="tabpanel" data-panel="post">
+      <div class="queue-head">
+        <h2>Post a pipeline run</h2>
+        <p>Submits run metrics to the gate policy (same rules Elsa calls). Clean → Gold ledger; dirty → Approvals.</p>
+      </div>
+
+      <div class="preset-row">
+        <button type="button" class="btn ghost" id="presetClean">Load clean sample</button>
+        <button type="button" class="btn ghost" id="presetDirty">Load dirty sample</button>
+      </div>
+
+      <form id="postForm" class="post-form">
+        <label class="field">Run id
+          <input name="runId" required spellcheck="false" />
+        </label>
+        <label class="field">Table
+          <input name="table" required value="silver.claims" spellcheck="false" />
+        </label>
+        <label class="field">Row count
+          <input name="rowCount" type="number" min="0" required />
+        </label>
+        <label class="field">Drift %
+          <input name="rowCountDriftPct" type="number" step="0.1" required />
+        </label>
+        <label class="field">Null rate %
+          <input name="nullRatePct" type="number" step="0.1" required />
+        </label>
+        <label class="field">Financial exposure ($)
+          <input name="financialExposure" type="number" min="0" step="1" required />
+        </label>
+        <label class="field">New columns (comma-separated)
+          <input name="newColumns" spellcheck="false" placeholder="member_ssn" />
+        </label>
+        <label class="check"><input name="containsSensitiveData" type="checkbox" /> Contains sensitive data</label>
+        <label class="check"><input name="isRegulatoryReporting" type="checkbox" /> Regulatory reporting table</label>
+        <div class="form-actions">
+          <button type="submit">Submit run</button>
+        </div>
+      </form>
+      <pre id="postResult" class="post-result" hidden></pre>
+    </section>
+
+    <section id="panel-approvals" class="panel" role="tabpanel" data-panel="approvals" hidden>
+      <section class="actor" aria-label="Acting identity">
+        <label>
+          <span>Acting as</span>
+          <select id="tier">
+            <option value="1">Data Steward</option>
+            <option value="2">Data Owner</option>
+            <option value="3" selected>Director</option>
+            <option value="4">Chief Data Officer</option>
+          </select>
+        </label>
+        <label class="grow">
+          <span>Approver id</span>
+          <input id="approverId" type="text" spellcheck="false" value="11111111-1111-1111-1111-111111111111" />
+        </label>
+        <button type="button" id="refreshApprovals" class="btn ghost">Refresh</button>
+      </section>
+
+      <div class="queue-head">
+        <h2>Pending approvals</h2>
+        <p>Two distinct approvers when the policy requires it. Metrics below are evidence — not gold table rows.</p>
+      </div>
+      <div id="list" class="list" aria-live="polite">Loading…</div>
+    </section>
+
+    <section id="panel-gold" class="panel" role="tabpanel" data-panel="gold" hidden>
+      <div class="queue-head">
+        <h2>Gold ledger</h2>
+        <p>Demo view of runs allowed through the gate (auto-promoted or steward-approved). Not a lakehouse browser — real gold tables live in your data platform.</p>
+      </div>
+      <button type="button" id="refreshGold" class="btn ghost gold-refresh">Refresh</button>
+      <div id="goldList" class="list" aria-live="polite">Loading…</div>
+    </section>
+  </main>
+
+  <script src="/app.js?v=3"></script>
+</body>
+</html>
