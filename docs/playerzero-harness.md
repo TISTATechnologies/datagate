@@ -1,8 +1,11 @@
 # DataGate — PlayerZero + Harness target stack
 
-**Goal:** Harness runs delivery. PlayerZero is for **incidents** (and optional PR
-insight) — not for gold promotion. Prefer **ServiceNow → PlayerZero** over
-firing API Triggers on every deploy.
+**Demo headline:** autonomous **product delivery with Harness**. DataGate is the
+sample app; scripts + pipeline are the reusable pattern. Full talk track:
+[`demo-harness.md`](demo-harness.md).
+
+**Supporting:** PlayerZero is for **incidents only** (prefer ServiceNow →
+PlayerZero). Not for gold promotion. Not the main demo.
 
 | Live link | Status |
 |---|---|
@@ -10,7 +13,10 @@ firing API Triggers on every deploy.
 | [Harness project `datagate`](https://app.harness.io/ng/account/w3CIbHK_T-yjEpzKqD-uuA/all/orgs/default/projects/datagate/overview) | Project up (`orgs/default`) |
 | PlayerZero | Repo loaded / ingesting |
 
-GitHub Actions can stay as a temporary PR gate until the first Harness CI run is green.
+GitHub Actions can stay as a backup PR gate; **Harness is the demo path**.
+
+**Modules:** CI now → **CD next** ([`harness-cd.md`](harness-cd.md)); module map in [`demo-harness.md`](demo-harness.md).
+
 
 ---
 

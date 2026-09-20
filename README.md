@@ -2,6 +2,9 @@
 
 A governed **silver → gold** promotion gate for data pipelines.
 
+**Demo focus:** show **autonomous CI/CD with Harness** using this repo as the
+sample product — see [`docs/demo-harness.md`](docs/demo-harness.md).
+
 Pipelines often fail in one of two ways: bad data reaches gold unnoticed, or
 every run is blocked on a human. DataGate sits in between. A Databricks-style
 job posts run metrics to a webhook; an **Elsa 3** workflow either
@@ -85,7 +88,7 @@ docker compose --env-file .env -f deploy/docker-compose.yml down -v
 | What | How |
 |---|---|
 | Continuous integration | Target: **Harness** (`.harness/pipeline.yaml`); interim: `.github/workflows/ci.yml` |
-| Continuous deploy (demo) | `./tools/deploy-local.sh` on laptop or Harness Delegate |
+| Continuous delivery | **Delegate** + `./tools/deploy-local.sh` — see [`docs/harness-cd.md`](docs/harness-cd.md) |
 | Incidents (AI triage) | **PlayerZero + ServiceNow** — see [`docs/playerzero-harness.md`](docs/playerzero-harness.md) |
 | Local CI mirror | `./tools/ci-local.sh all` |
 
@@ -119,7 +122,7 @@ Details: [`docs/cicd-automation.md`](docs/cicd-automation.md),
 | `workflow/definitions/` | Elsa workflow definitions |
 | `deploy/` | docker compose stack |
 | `.github/workflows/` | CI + deploy workflows |
-| `.harness/` | Harness CI/CD stub (+ PlayerZero notify) |
+| `.harness/` | CI `pipeline.yaml` + CD `cd-pipeline.yaml` |
 | `.pzignore` | PlayerZero ingest exclusions |
 | `tools/` | deploy/ci/smoke/seed + `playerzero-notify.sh` |
 
