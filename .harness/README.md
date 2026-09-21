@@ -1,13 +1,15 @@
 # Harness + PlayerZero
 
-Harness = delivery. PlayerZero = **incidents** (prefer ServiceNow connector).
+**Import one file:** [`.harness/pipeline.yaml`](pipeline.yaml) → pipeline **datagate-ci-cd**  
+(CI on Cloud → Deploy on Delegate).
+
 Talk track: [`docs/demo-harness.md`](../docs/demo-harness.md) ·
-CD steps: [`docs/harness-cd.md`](../docs/harness-cd.md).
+CD / Delegate: [`docs/harness-cd.md`](../docs/harness-cd.md).
 
 | File | Purpose |
 |---|---|
-| `pipeline.yaml` | CI on Harness Cloud: validate + unit |
-| `cd-pipeline.yaml` | CD: precheck + `deploy-local.sh` (run on **Delegate**) |
+| `pipeline.yaml` | **Import this** — validate + unit + deploy |
+| `cd-pipeline.yaml` | Stub only (merged); do not import |
 
 ## Local
 
@@ -17,27 +19,17 @@ chmod +x tools/*.sh
 ./tools/ci-local.sh all
 ```
 
-## Harness CI (Cloud)
+## Import into Harness
 
-### Fix connector error first
-If you see *The given connector doesn't have api access field set*:
+1. Connector `datagate_github` with **API access** + Connect through Harness Platform.
+2. Pipelines → Create / Edit → YAML path: **`.harness/pipeline.yaml`** (not a GitHub blob URL).
+3. Save → Run → branch `main` (CI stages should go green on Cloud).
+4. Install **Docker Delegate** ([docs/harness-cd.md](../docs/harness-cd.md)).
+5. Edit **Deploy demo** stage → set infrastructure to that Delegate (not Cloud).
+6. Delete the old separate `datagate-ci` / `datagate-cd` pipelines in the UI if you no longer need them.
 
-1. Project Setup → Connectors → `datagate_github` → Edit  
-2. Enable **API access** → Personal Access Token → same PAT secret as auth  
-3. Connectivity: **Connect through Harness Platform** (needed for Harness Cloud)  
-4. Test connection → Save  
-
-### YAML Path (Git Experience)
-Use a **path inside the repo**, not a browser URL:
+### YAML Path
 
 | Wrong | Right |
 |---|---|
 | `https://github.com/.../blob/main/.harness/pipeline.yaml` | `.harness/pipeline.yaml` |
-
-## Harness CD (next)
-
-1. Follow [`docs/harness-cd.md`](../docs/harness-cd.md).
-2. Install a **Docker Delegate** with Compose.
-3. Import `cd-pipeline.yaml` (path `.harness/cd-pipeline.yaml`) or add Deploy stage.
-4. Point Deploy at the Delegate (not Cloud) so the stack stays up.
-5. Incidents: ServiceNow → PlayerZero (no deploy notify required).

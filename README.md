@@ -87,8 +87,8 @@ docker compose --env-file .env -f deploy/docker-compose.yml down -v
 
 | What | How |
 |---|---|
-| Continuous integration | Target: **Harness** (`.harness/pipeline.yaml`); interim: `.github/workflows/ci.yml` |
-| Continuous delivery | **Delegate** + `./tools/deploy-local.sh` — see [`docs/harness-cd.md`](docs/harness-cd.md) |
+| Continuous integration | **Harness** one pipeline `.harness/pipeline.yaml` (`datagate-ci-cd`); interim: `.github/workflows/ci.yml` |
+| Continuous delivery | Same pipeline → Deploy stage on **Delegate** — [`docs/harness-cd.md`](docs/harness-cd.md) |
 | Incidents (AI triage) | **PlayerZero + ServiceNow** — see [`docs/playerzero-harness.md`](docs/playerzero-harness.md) |
 | Local CI mirror | `./tools/ci-local.sh all` |
 
@@ -122,7 +122,7 @@ Details: [`docs/cicd-automation.md`](docs/cicd-automation.md),
 | `workflow/definitions/` | Elsa workflow definitions |
 | `deploy/` | docker compose stack |
 | `.github/workflows/` | CI + deploy workflows |
-| `.harness/` | CI `pipeline.yaml` + CD `cd-pipeline.yaml` |
+| `.harness/` | One import: `pipeline.yaml` (`datagate-ci-cd`) |
 | `.pzignore` | PlayerZero ingest exclusions |
 | `tools/` | deploy/ci/smoke/seed + `playerzero-notify.sh` |
 

@@ -1,19 +1,22 @@
-# Harness CI pipeline for DataGate (Harness Cloud — first run).
-# Git Experience YAML path (relative to repo root): .harness/pipeline.yaml
+# DataGate — one Harness pipeline: CI then CD.
+# Import this file only. YAML path: .harness/pipeline.yaml
 # Do NOT paste a github.com/.../blob/... URL into "YAML Path".
 #
-# Prerequisites:
-#   1. Connector datagate_github with API access enabled (same PAT secret).
-#   2. Connect through Harness Platform (required for Harness Cloud).
-# Smoke/deploy need Docker on a Delegate — omitted here on purpose.
+# Flow:
+#   1. Validate + unit  → Harness Cloud (no Docker needed)
+#   2. Deploy demo      → must run on a Docker Delegate (not Cloud)
+#
+# After import: open Deploy stage → Infrastructure → select your Delegate.
+# Docs: docs/harness-cd.md · docs/demo-harness.md
 
 pipeline:
-  name: datagate-ci
-  identifier: datagateci
+  name: datagate-ci-cd
+  identifier: datagatecicd
   projectIdentifier: datagate
   orgIdentifier: default
   tags:
     product: datagate
+    kind: cicd
   properties:
     ci:
       codebase:
@@ -24,7 +27,7 @@ pipeline:
     - stage:
         name: Validate and unit
         identifier: validate_and_unit
-        description: Workflow JSON + domain unit tests (no Docker)
+        description: Workflow JSON + domain unit tests (Harness Cloud)
         type: CI
         spec:
           cloneCodebase: true
@@ -60,3 +63,34 @@ pipeline:
                       export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
                       export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
                       ./tools/ci-local.sh unit
+
+    - stage:
+        name: Deploy demo
+        identifier: deploy_demo
+        description: compose up, seed Elsa, smoke — switch this stage to a Docker Delegate
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          # Placeholder: after import, change Infrastructure from Cloud → Delegate
+          # (Project Setup → Delegates). Cloud cannot keep the stack up.
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: deploy
+                  identifier: deploy
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      chmod +x tools/*.sh
+                      cp -n .env.example .env 2>/dev/null || true
+                      export RUN_SMOKE=1
+                      export SEED=1
+                      ./tools/deploy-local.sh

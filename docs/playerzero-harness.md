@@ -74,7 +74,7 @@ Incidents (primary PlayerZero path)
 
 | Path | Role |
 |---|---|
-| `.harness/pipeline.yaml` | Import into Harness project `datagate` |
+| `.harness/pipeline.yaml` | **Import once** → `datagate-ci-cd` (CI + Deploy) |
 | `.pzignore` | Keep `.env` / secrets out of PlayerZero ingest |
 | `tools/playerzero-notify.sh` | Optional API Trigger only (non-SN sources) |
 | `tools/ci-local.sh` | Same commands Harness Run steps should call |

@@ -17,7 +17,7 @@ demo = Delegate machine that keeps containers running.
 
 ## Prerequisites
 
-1. **CI green** — `datagate-ci` validate + unit already works.
+1. **CI green** — `datagate-ci-cd` validate + unit already works.
 2. **CD / Free plan** — Account Settings → Subscriptions → enable **Continuous Delivery** if prompted (same pattern as CI Free).
 3. **Delegate** on a machine that has:
    - Docker + Docker Compose
@@ -37,6 +37,37 @@ demo = Delegate machine that keeps containers running.
 
 Official overview: [Harness Delegates](https://developer.harness.io/docs/platform/delegates/delegate-concepts/get-started-with-delegates/).
 
+### If Delegate fails to connect
+
+Error: *failed to connect to Harness SaaS* / *check pods on the cluster*
+
+1. **Prefer Docker, not Kubernetes**, for this demo  
+   Project Setup → Delegates → Install → **Docker**.  
+   A K8s install needs a healthy cluster; compose CD does not need one.
+2. **Outbound HTTPS** from the host/container to Harness (port **443**):
+
+```bash
+curl -sI https://app.harness.io | head -5
+# Account Overview may show prod-2/prod-3 — also try:
+# curl -sI https://app.harness.io/gratis | head -3
+# curl -sI https://app3.harness.io | head -3
+```
+
+3. **Docker Delegate status / logs**
+
+```bash
+docker ps -a | grep -i delegate
+docker logs -f <delegate-container-name>
+```
+
+4. Common fixes  
+   - Corporate VPN/firewall blocking `app.harness.io` → allowlist or different network  
+   - Proxy required → set `PROXY_HOST` / `PROXY_PORT` / `PROXY_SCHEME` on the Delegate ([proxy docs](https://developer.harness.io/docs/platform/delegates/manage-delegates/configure-delegate-proxy-settings/))  
+   - Wrong manager URL for your cluster (Account Settings → Overview → Harness Cluster) — [install guide](https://developer.harness.io/docs/platform/tutorials/install-delegate/)  
+   - Docker not running / out of CPU-memory (give Delegate ~1 CPU / 2GB)  
+5. Delete the failed Delegate in Harness UI, reinstall fresh Docker command from the wizard.  
+6. Until Connected: keep using `./tools/deploy-local.sh` on your laptop for the demo.
+
 ---
 
 ## Step 2 — Create the CD pipeline (UI)
@@ -47,11 +78,10 @@ Run on Delegate** deploy is enough and matches `deploy-local.sh`.
 
 ### Recommended: one pipeline, CI then CD
 
-1. Open pipeline **datagate-ci** (or create **datagate-cd**).
-2. After the Validate/unit stage, **Add Stage**.
-3. Prefer a **Custom** stage or CI stage whose infrastructure is the **Delegate**
-   (not Harness Cloud).
-4. Add a **Shell Script** or **Run** step:
+1. Open pipeline **datagate-ci-cd** (imported from `.harness/pipeline.yaml`).
+2. Confirm **Validate and unit** uses Harness Cloud.
+3. Open **Deploy demo** → set infrastructure to your **Delegate** (not Cloud).
+4. Deploy step should run:
 
 ```bash
 chmod +x tools/*.sh
@@ -60,10 +90,9 @@ export RUN_SMOKE=1
 ./tools/deploy-local.sh
 ```
 
-5. Set **Delegate selector** to your connected Delegate.
-6. Save → Run (branch `main`).
+5. Save → Run (branch `main`).
 
-YAML reference in-repo: [`.harness/cd-pipeline.yaml`](../.harness/cd-pipeline.yaml).
+YAML: [`.harness/pipeline.yaml`](../.harness/pipeline.yaml) (single **datagate-ci-cd** — import that file only).
 
 ### Alternative: CD module Service / Environment
 

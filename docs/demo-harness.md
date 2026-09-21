@@ -39,7 +39,7 @@ governance** (two-person promote) stays explicit.
 
 1. **Product in one line** — DataGate auto-promotes clean silver→gold; parks risk for stewards. Show steward UI briefly if useful.
 2. **Same commands everywhere** — `./tools/ci-local.sh validate` / `unit` on a laptop = what Harness runs.
-3. **Harness pipeline** — open [project datagate](https://app.harness.io/ng/account/w3CIbHK_T-yjEpzKqD-uuA/all/orgs/default/projects/datagate/overview) → run `datagate-ci` → green validate + unit (.NET 10 install on Cloud if needed).
+3. **Harness pipeline** — open [project datagate](https://app.harness.io/ng/account/w3CIbHK_T-yjEpzKqD-uuA/all/orgs/default/projects/datagate/overview) → run **datagate-ci-cd** → green validate + unit (.NET 10 on Cloud if needed); Deploy when Delegate is Connected.
 4. **Autonomy story** — “Next product: same pattern — repo scripts + Harness stages; no bespoke CI snowflake.”
 5. **Optional coda** — incidents via ServiceNow → PlayerZero; gold promote stays Elsa, not AI.
 
@@ -74,7 +74,8 @@ Harness switcher can join later — pick only what serves the autonomy story.
 
 ```text
 Now:      Continuous Integration          ← validate + unit (live)
-Next:     CD on Delegate (this guide)     ← docs/harness-cd.md + .harness/cd-pipeline.yaml
+Next:     One pipeline **datagate-ci-cd** (`.harness/pipeline.yaml`)  ← import this
+          Deploy stage on Delegate — docs/harness-cd.md
 Later:    Continuous Delivery + K8s       ← Blue-Green / Canary
 Optional: Security Testing Orchestration
 Side:     PlayerZero + ServiceNow         ← incidents
@@ -84,8 +85,8 @@ Side:     PlayerZero + ServiceNow         ← incidents
 
 | Module | Use? | Notes |
 |---|---|---|
-| **Continuous Integration** | **Yes — now** | `datagate-ci`: validate, unit; scripts via `ci-local.sh` |
-| **CD (Delegate + compose)** | **Yes — next** | [`harness-cd.md`](harness-cd.md): install Delegate → `deploy-local.sh` → lasting UI |
+| **Continuous Integration** | **Yes — now** | First stage of `datagate-ci-cd`: validate, unit |
+| **CD (Delegate + compose)** | **Yes — same pipeline** | Second stage: `deploy-local.sh` on Delegate — [`harness-cd.md`](harness-cd.md) |
 | **Continuous Delivery & GitOps** (K8s) | Later | Native Blue-Green / Canary when we have a cluster |
 | **Security Testing Orchestration** | Stretch | Prefer over only ad-hoc Trivy in a Run step |
 | **Infrastructure as Code Management** | Later | Env-as-code; overkill for compose-only demo |
@@ -102,9 +103,9 @@ Side:     PlayerZero + ServiceNow         ← incidents
 **Pitch line:** “CI proves the product; CD ships it on a Delegate — same
 `deploy-local.sh` as a laptop.” Full CD steps: [`harness-cd.md`](harness-cd.md).
 
-**UI tip:** Project Setup → **Delegates** → install Docker Delegate → import
-[`.harness/cd-pipeline.yaml`](../.harness/cd-pipeline.yaml) or add Deploy stage
-after CI. Module switcher → **Continuous Delivery** when you move to K8s.
+**UI tip:** Import **one** YAML — [`.harness/pipeline.yaml`](../.harness/pipeline.yaml)
+(`datagate-ci-cd`). After CI is green, point **Deploy demo** at a Docker Delegate.
+
 
 Blue / green in Harness usually means the **CD Blue-Green strategy** (two
 versions, traffic swap), not CI status colors (green = success, red = failed).
