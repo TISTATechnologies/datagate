@@ -1,6 +1,7 @@
 # Harness + PlayerZero
 
-**Import one file:** [`.harness/pipeline.yaml`](pipeline.yaml) → pipeline **datagate-ci-cd**  
+**Import one file:** [`.harness/pipeline.yaml`](pipeline.yaml)  
+Display name **datagate-ci-cd**, identifier **`datagateci`** (must match existing Harness pipeline).  
 (CI on Cloud → Deploy on Delegate).
 
 Talk track: [`docs/demo-harness.md`](../docs/demo-harness.md) ·
@@ -23,10 +24,10 @@ chmod +x tools/*.sh
 
 1. Connector `datagate_github` with **API access** + Connect through Harness Platform.
 2. Pipelines → Create / Edit → YAML path: **`.harness/pipeline.yaml`** (not a GitHub blob URL).
-3. Save → Run → branch `main` (CI stages should go green on Cloud).
-4. Install **Docker Delegate** ([docs/harness-cd.md](../docs/harness-cd.md)).
-5. Edit **Deploy demo** stage → set infrastructure to that Delegate (not Cloud).
-6. Delete the old separate `datagate-ci` / `datagate-cd` pipelines in the UI if you no longer need them.
+3. Keep YAML `identifier: datagateci` if the pipeline already exists in Harness (changing it causes *Expected Pipeline identifier…* errors).
+4. Save → Run → branch `main` (CI stages should go green on Cloud).
+5. Install **Docker Delegate** ([docs/harness-cd.md](../docs/harness-cd.md)).
+6. Edit **Deploy demo** stage → set infrastructure to that Delegate (not Cloud).
 
 ### YAML Path
 

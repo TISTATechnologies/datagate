@@ -10,8 +10,10 @@
 # Docs: docs/harness-cd.md · docs/demo-harness.md
 
 pipeline:
+  # Display name can say ci-cd; identifier must match the pipeline already in Harness.
+  # Existing UI pipeline is datagateci — do not rename identifier in YAML or Git sync fails.
   name: datagate-ci-cd
-  identifier: datagatecicd
+  identifier: datagateci
   projectIdentifier: datagate
   orgIdentifier: default
   tags:
