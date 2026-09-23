@@ -1,0 +1,82 @@
+{
+  "name": "Jira Bug Triage",
+  "description": "Takes an incoming Jira bug, checks it against ticket history, root-causes it against the code, and writes the triage decision back to the ticket on approval.",
+  "category": "Engineering",
+  "stages": [
+    {
+      "id": "ticket-intake",
+      "name": "Ticket Intake",
+      "instruction": "You are picking up a newly reported bug.\n\n## Goal\nUnderstand what is actually being reported, before anyone starts looking for a cause.\n\n## What to do\n- Read the Jira issue in full: description, comments, and any attached screenshots, logs, or files. The attachments often carry the real evidence while the description carries the reporter's interpretation.\n- Separate four things and keep them separate for the rest of the run: what the reporter asked for, what they stated as fact, what they offered as a theory, and what you established yourself. Treat identifiers, versions, and timestamps in the report as leads to verify, not as given.\n- State the symptom, who is affected, how often, and when it started.\n- Judge whether the report is reproducible from what is written. If it is not, say exactly what is missing.\n- Search memory for prior tickets with these symptoms, known fragile areas, and team triage preferences. Surface what you found, and say plainly when nothing relevant turned up.\n\n## Definition of done\nA triage brief exists as a durable artifact containing: the symptom in plain language, affected users and frequency, the reporter's theory recorded as a theory, whether it is reproducible from the report, what memory recalled, and the open questions. Nothing is written to Jira at this stage.",
+      "type": "Entry",
+      "autoApprove": true,
+      "preferredMode": "Standard",
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if the ticket is too thin to identify what is broken — ask the reporter for the concrete symptom, one affected example, and when it started, rather than investigating a guess."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "duplicate-and-history-check",
+          "instruction": "Once the symptom and affected surface are clear, check whether this has been reported or fixed before."
+        }
+      ]
+    },
+    {
+      "id": "duplicate-and-history-check",
+      "name": "Duplicate and History Check",
+      "instruction": "You are checking whether this bug is actually new.\n\n## Goal\nAvoid investigating something the team has already reported, already fixed, or already decided not to fix.\n\n## What to do\n- Search Jira for issues with the same symptom, the same affected area, or the same error signature. Search by keyword and by structured query, and look at closed issues as well as open ones — a bug that was closed and came back matters more than a new one.\n- For each candidate match, judge whether it is the same defect or merely similar. Same symptom with a different cause is not a duplicate.\n- Check whether the reported behavior was already fixed in code after the reporter's version. A bug fixed but not yet released is a different outcome from a bug that still exists.\n- Note any related-but-distinct issues worth linking, and any parent epic this belongs under.\n\n## Definition of done\nA history artifact exists naming each candidate match with its issue key, your verdict on whether it is a duplicate and why, whether the behavior is already fixed in code, and the relationships worth recording. Nothing is written to Jira at this stage.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Standard",
+      "escalationPolicy": {
+        "enabled": false,
+        "guidance": null
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "triage-and-update",
+          "instruction": "If this is clearly a duplicate of an existing issue, or the behavior is already fixed in code, skip the investigation and go straight to proposing the ticket update."
+        },
+        {
+          "stageId": "root-cause-investigation",
+          "instruction": "If this is a genuinely new defect, investigate the root cause."
+        }
+      ]
+    },
+    {
+      "id": "root-cause-investigation",
+      "name": "Root Cause Investigation",
+      "instruction": "You are leading a team of investigators finding the cause of the bug.\n\n## Goal\nA leading explanation with a mechanism and an evidence chain, plus enough understanding to judge how urgent this is.\n\n## What to do\nFan the work out and run these in parallel, then reconcile what comes back:\n- Trace the reported symptom backwards through the code to the point where behavior diverges from intent.\n- Pull operational evidence from whatever telemetry, logging, or session data is connected, for the window the report names.\n- Review changes that landed shortly before the first report.\n- Check the surrounding area for the same defect in other code paths — one report often means several broken paths.\n\nThen judge severity from evidence rather than from the reporter's tone: how many users this reaches, whether data is at risk, whether a workaround exists, and whether it is getting worse.\n\nA root cause is a hypothesis until the mechanism and the evidence line up. Say how confident you are, and name what you would check next if you are not.\n\n## Definition of done\nA root cause artifact exists containing: the leading cause with its mechanism and evidence chain, other paths affected by the same defect, a severity judgement with the reasoning behind it, a suggested fix direction, what you could not determine, and citations for every finding.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Pro",
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if the investigation needs something only a human holds — an environment detail, a customer specific, or access to a system you cannot reach — rather than spending further effort on a guess."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "triage-and-update",
+          "instruction": "Once there is a leading cause with an evidence chain, or the evidence has clearly stopped converging, propose the ticket update."
+        }
+      ]
+    },
+    {
+      "id": "triage-and-update",
+      "name": "Triage and Update",
+      "instruction": "You are closing out triage and writing the decision back to Jira.\n\n## Goal\nThe ticket ends this run in a state an engineer can pick up without repeating any of the work.\n\n## What to do\n\n**Propose, then wait.** Present the complete set of changes you intend to make to the ticket, and wait for explicit approval. Do not write anything to Jira on implied consent, and do not treat a general acknowledgement as approval.\n\nA proposal covers whichever of these apply:\n- A comment carrying the triage outcome: the cause with its evidence, other affected paths, the suggested fix direction, and what remains uncertain. Write it for an engineer who has not read any of the prior artifacts.\n- Field changes — priority, component, labels, and a suggested assignee based on who owns the affected code.\n- Links to duplicates, related issues, or a parent epic.\n- A state transition, if the team's process calls for one after triage.\n\nWhere this turned out to be a duplicate or already fixed, propose exactly that instead: the link to the original, a short comment explaining the verdict, and the appropriate close or transition. Do not manufacture an investigation you did not do.\n\n**On approval, write to Jira.** Account for every write: on success, state what changed and link the ticket. On failure, name the attempted action, the error, whether a retry is safe, and the recommended next step, and preserve the drafted comment so nothing is lost. Retry a transient failure once, then stop and flag it.\n\n- Never close a ticket that has not been confirmed as a duplicate or already fixed. Triage decides what a bug is, not whether it is done.\n- Never delete or edit someone else's comment.\n- Propose any memories worth keeping: a non-obvious cause and its fix, a recurring failure pattern, a fragile area, or a triage preference the reviewer expressed. Show the exact content and create only what is approved.\n\n## Definition of done\nA triage summary exists naming the verdict, every change made to the ticket, anything that failed to write and why, and the memories created or declined. Every intended Jira write has either completed or been explicitly surfaced as skipped or failed.",
+      "type": "Terminal",
+      "autoApprove": false,
+      "preferredMode": "Standard",
+      "approverConfig": { "method": "Player" },
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Always pause for explicit approval of the exact comment text, field changes, links, and transition before writing to Jira. Escalate as well if a write fails in a way a retry will not fix."
+      },
+      "archiveConfig": { "archiveType": "Automatic", "autoArchiveAfterDays": 14 }
+    }
+  ]
+}
