@@ -1,0 +1,121 @@
+{
+  "name": "Incident RCA to Docs",
+  "description": "Root-causes an incident grounded in the team's existing documentation, then publishes what was learned to Confluence as a runbook page and a changelog entry.",
+  "category": "SRE",
+  "stages": [
+    {
+      "id": "incident-intake",
+      "name": "Incident Intake",
+      "instruction": "You are taking on a live or recently-resolved incident.\n\n## Goal\nEstablish what is broken, for whom, and since when, so the investigation starts from facts rather than from the reporter's theory.\n\n## What to do\n- Read the incident from whichever source it arrived on — a connected ticketing system, an error or session in PlayerZero, or a report pasted into the conversation. If an upstream workflow handed off a summary, start from that.\n- Separate four things and keep them separate for the rest of the run: what the reporter asked for, what they stated as fact, what they offered as a theory, and what you established yourself. Treat identifiers, timestamps, and version numbers in a report as leads to verify, not as given.\n- State the symptom, the blast radius, when it started, and what changed around that time.\n- Search memory for prior incidents with these symptoms, known fragile areas, prior resolutions and workarounds, and team preferences about how incidents are documented. Surface what you found, and say plainly when nothing relevant turned up.\n\n## Definition of done\nAn incident brief exists as a durable artifact containing: the symptom in plain language, impact and affected surface, the timeline, the reporter's theory recorded as a theory, what memory recalled, and the open questions. Write it so an on-call engineer can pick it up cold.",
+      "type": "Entry",
+      "autoApprove": true,
+      "preferredMode": "Standard",
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if the report is too thin to identify what is actually broken — ask for the concrete symptom, one affected example, and when it started, rather than guessing."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "docs-grounding",
+          "instruction": "Once the incident brief names the symptom and the affected surface, ground yourself in the existing documentation for that area."
+        }
+      ]
+    },
+    {
+      "id": "docs-grounding",
+      "name": "Docs Grounding",
+      "instruction": "You are collecting what the team has already written about the affected area, before you investigate.\n\n## Goal\nStart the investigation from documented intent and prior operational knowledge, so you do not re-derive what someone already wrote down.\n\n## What to do\n- Search the connected Confluence spaces for architecture notes, design decisions, runbooks, and past postmortems covering the affected area. Search the PlayerZero knowledge base for the same.\n- Treat everything you find as a hypothesis to confirm, not as ground truth. Documentation goes stale, and a connected source is not automatically a current one.\n- For each relevant document, note what it claims, whether the current code still matches that claim, and who wrote it.\n- Identify whether a runbook for this failure already exists. If one does, you will update it later rather than create a second one.\n- If Confluence is unavailable or returns nothing for the area, say so plainly, continue with code and operational evidence, and lower your confidence rather than filling the gap.\n\n## Definition of done\nA grounding brief exists listing the documents found with links, what each claims, which claims you confirmed against code and which look stale, whether an existing runbook covers this failure, and the sources you deliberately skipped.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Standard",
+      "escalationPolicy": {
+        "enabled": false,
+        "guidance": null
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "root-cause-investigation",
+          "instruction": "Once the documented context is gathered and its freshness assessed, investigate the root cause."
+        }
+      ]
+    },
+    {
+      "id": "root-cause-investigation",
+      "name": "Root Cause Investigation",
+      "instruction": "You are leading a team of investigators converging on the cause.\n\n## Goal\nA single leading explanation with a mechanism and an evidence chain, or an honest ranked shortlist if the evidence does not converge.\n\n## What to do\nFan the work out and run these in parallel, then reconcile what comes back:\n- Trace the failing path through the code from the symptom backwards.\n- Pull operational evidence from whatever telemetry, logging, or session data is connected, for the window the timeline names.\n- Review changes that landed shortly before the incident started.\n- Look for earlier tickets and incidents with the same signature.\n\nThen reconcile. Where the documentation from the previous stage disagrees with the code or the live evidence, prefer the code and the evidence, and record the disagreement — a stale document is itself a finding worth publishing later.\n\nA root cause is a hypothesis until the mechanism and the evidence line up. Rank what you have, say how confident you are in each, and name what you would check next.\n\n## Definition of done\nAn investigation brief exists containing: the leading cause with its mechanism and evidence chain, the alternatives you ruled out and why, confidence stated as confidence, what you could not determine, any documentation found to be wrong, and citations for every finding.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Pro",
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if the investigation needs information only a human holds — an operational detail, a deployment decision, or access to a system you cannot reach — rather than spending further effort on a guess."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "root-cause-confirmation",
+          "instruction": "Once there is a leading cause with an evidence chain, or the evidence has clearly stopped converging, put it in front of a human."
+        }
+      ]
+    },
+    {
+      "id": "root-cause-confirmation",
+      "name": "Root Cause Confirmation",
+      "instruction": "You are getting the root cause confirmed before anything gets written down as fact.\n\n## Goal\nA human agrees the cause is right, because everything published downstream inherits this conclusion.\n\n## What to do\n- Present the leading cause, its mechanism, and the evidence chain. Lead with the conclusion, then the evidence, then what remains uncertain.\n- State plainly which parts you verified and which you inferred.\n- Answer challenges by re-checking the specific evidence rather than defending the whole conclusion. If part of it was wrong, withdraw exactly that part and say which.\n- Do not proceed until the cause is explicitly confirmed. If the reviewer rejects it or points at a stronger lead, route back to investigation with what changed.\n\n## Definition of done\nThe root cause is explicitly confirmed by the reviewer, and any correction they made is reflected in the investigation brief.",
+      "type": "Work",
+      "autoApprove": false,
+      "preferredMode": "Standard",
+      "approverConfig": { "method": "Player" },
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Always pause here for explicit confirmation of the root cause. Do not read silence or a general acknowledgement as approval."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "root-cause-investigation",
+          "instruction": "If the reviewer rejects the cause or points at a stronger lead, return to investigation and pursue it."
+        },
+        {
+          "stageId": "documentation-draft",
+          "instruction": "Once the root cause is confirmed, draft the documentation that captures it."
+        }
+      ]
+    },
+    {
+      "id": "documentation-draft",
+      "name": "Documentation Draft",
+      "instruction": "You are turning the confirmed root cause into documentation, as drafts only.\n\n## Goal\nTwo reviewable drafts: an operational runbook for the next person who hits this, and a changelog entry recording the fix.\n\n## What to do\nDraft both in the workspace. Publish nothing at this stage.\n\n**Runbook draft.** Write it for an on-call engineer under pressure, not for an archive. Lead with how to recognize this failure, then the immediate mitigation, then the underlying cause and the permanent fix. Include the diagnostic steps that actually worked and skip the ones that did not. If an existing runbook covers this failure, draft it as an update to that page and show what changes, rather than a second page on the same subject.\n\n**Changelog entry.** One short, user-facing entry for the fix: what was broken, what changed, and who it affects. No internal identifiers, no blame, no code detail. Draft it as an addition to the running changelog page and show the surrounding context it will sit in. If no fix has actually shipped yet, say so and draft no changelog entry — a fix that is only planned does not belong in a changelog.\n\n**Where these go.** Both live under the PlayerZero page in the TD Confluence space, as child pages: one runbook page per distinct failure mode, and a single running changelog page that every entry is appended to. Create either child page if it does not exist yet; never start a second page on a subject an existing child already covers. If the reviewer names a different destination, follow that instead.\n\nWhere the investigation found a document that is now wrong, note it and propose the correction. Do not silently rewrite someone else's page.\n\n## Definition of done\nA documentation draft artifact exists holding the exact proposed runbook content, the exact proposed changelog entry or a stated reason there is none, the target page for each, whether each is a new page or an update, and any corrections proposed to existing documents.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Standard",
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if you cannot tell whether the fix has shipped, or which Confluence space and page the runbook and changelog belong on."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "publish-and-close",
+          "instruction": "Once both drafts are complete and their target pages identified, take them to publication."
+        }
+      ]
+    },
+    {
+      "id": "publish-and-close",
+      "name": "Publish and Close",
+      "instruction": "You are publishing the documentation and closing the incident out.\n\n## Goal\nThe runbook and the changelog entry exist in Confluence, exactly as approved, and what the run learned is captured.\n\n## What to do\n- Present the exact content of every page you intend to create or update, and wait for explicit approval of that content. Approval of the root cause earlier is not approval to publish. Publish nothing on implied consent.\n- On approval, write to Confluence under the PlayerZero page in the TD space: update the existing runbook child page if one covers this failure, otherwise create it as a new child, and append the changelog entry to the running changelog child page, creating that page if this is the first entry.\n- Account for every write. On success, state exactly what changed and link each page. On failure, name the system, the attempted action, the error, whether a retry is safe, and the recommended next step — then preserve the drafted content in the artifact so nothing is lost. Retry a transient failure once, then stop and flag it as a blocker.\n- Skip the changelog write, and say so, if no fix has shipped.\n- Propose any memories worth keeping: a non-obvious root cause and its fix, a recurring failure pattern, a fragile area, or a documentation preference the reviewer expressed. Show the exact proposed content and create only what is approved. Update an existing memory rather than adding a near-duplicate.\n- Do not delete any Confluence page. Where a document is wrong, propose the correction and leave the decision with the reviewer.\n\n## Definition of done\nA close-out summary exists naming the confirmed root cause, the pages published or updated with links, anything that failed to publish and why, and the memories created or declined. Every intended external write has either completed or been explicitly surfaced as skipped or failed.",
+      "type": "Terminal",
+      "autoApprove": false,
+      "preferredMode": "Standard",
+      "approverConfig": { "method": "Player" },
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Always pause for explicit approval of the exact page content before writing to Confluence. Escalate as well if a write fails in a way a retry will not fix."
+      },
+      "archiveConfig": { "archiveType": "Automatic", "autoArchiveAfterDays": 30 }
+    }
+  ]
+}

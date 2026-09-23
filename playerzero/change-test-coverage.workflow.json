@@ -1,0 +1,102 @@
+{
+  "name": "Change Test Coverage",
+  "description": "Takes a code change or pull request and produces a reviewed, simulated set of test scenarios covering the behavior it affects. Results stay inside PlayerZero.",
+  "category": "QA",
+  "stages": [
+    {
+      "id": "change-intake",
+      "name": "Change Intake",
+      "instruction": "You are a QA engineer opening coverage work on a code change.\n\n## Goal\nEstablish exactly what changed and what the change is meant to do, so later stages test intent rather than guessing.\n\n## What to do\n- Identify the branch or pull request under review. If the starting input is only a ticket, a description, or a branch name, resolve it to a concrete diff before continuing.\n- Read the diff. Summarize what changed, in product terms, not as a file list.\n- State the intended behavior change and the behavior that must stay the same.\n- Search memory for anything relevant: prior coverage gaps in this area, known fragile flows, team preferences about how scenarios should be written, and which context sources this team trusts. Surface what you found to the user, and say plainly when nothing relevant turned up.\n- Search the knowledge base for design notes, runbooks, or standards covering the touched area, and treat them as a hypothesis to confirm against the code.\n\n## Definition of done\nA change brief exists as a durable artifact containing: a plain-language summary of the change, the intended new behavior, the behavior that must not regress, open questions or assumptions, the sources you used and the ones you deliberately skipped, and citations to the diff and any documents. Write it for a reader who knows the product but is not deep in this code.",
+      "type": "Entry",
+      "autoApprove": true,
+      "preferredMode": "Standard",
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if you cannot resolve the input to a specific diff, or if the change has no discernible intent from the code and commit history — ask for the branch or a one-line statement of what it is meant to do."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "behavior-mapping",
+          "instruction": "Once the change brief exists and the intended behavior is clear, map the behavior the change affects."
+        }
+      ]
+    },
+    {
+      "id": "behavior-mapping",
+      "name": "Behavior Mapping",
+      "instruction": "You are leading a team of investigators mapping the blast radius of the change.\n\n## Goal\nProduce a coverage map: every behavior the change can affect, ranked by risk, with existing coverage marked.\n\n## What to do\nFan the work out and run these in parallel, then reconcile the findings:\n- Trace the changed code forward to every entry point, flow, and consumer it can reach.\n- Identify validation rules, state transitions, permission or authority checks, and persistence effects in the affected path.\n- Review the existing scenario library for scenarios that already cover this area, and flag any that the change makes outdated.\n- Look for historical failure patterns in this area from tickets, past incidents, and memory.\n\nRank each behavior by risk: how likely the change breaks it, and how much it matters if it does. Call out edge cases and failure paths explicitly — the happy path is the easy part.\n\n## Definition of done\nA coverage map artifact exists listing each affected behavior, its risk ranking, whether an existing scenario already covers it, and the gaps that need new scenarios. Every finding cites the code, ticket, or artifact it came from. Note which of the behaviors you could not confidently assess and why.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Pro",
+      "escalationPolicy": {
+        "enabled": false,
+        "guidance": null
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "scenario-drafting",
+          "instruction": "Once the coverage map is complete and the gaps are ranked, draft scenarios for the gaps."
+        }
+      ]
+    },
+    {
+      "id": "scenario-drafting",
+      "name": "Scenario Drafting",
+      "instruction": "You are authoring the test scenarios that will be simulated.\n\n## Goal\nTurn the ranked gaps in the coverage map into a small, orthogonal set of scenarios that a simulation can verify deterministically.\n\n## What to do\n- Cover the highest-risk gaps first. Prefer a handful of sharp scenarios over broad coverage of everything.\n- Give each scenario a starting condition, an ordered set of actions, and one expectation.\n- Each scenario validates one invariant. If two things can independently block an outcome, split it into two scenarios.\n- Write the starting condition, actions, and expectation in product language. Keep code identifiers, file paths, and numeric thresholds out of them; put navigation aids in the hints instead, so the scenarios survive a refactor.\n- Where the expectation depends on a prerequisite, either state that prerequisite in the starting condition or stop the expectation at the first point that is deterministic.\n- Group the set into a playlist so it can be re-run against future changes.\n\n## Definition of done\nA scenario set artifact exists mapping each drafted scenario back to the gap it closes, with anything in the coverage map deliberately left uncovered named along with the reason. Present the scenarios for review and do not move on to simulation until they are approved. If the reviewer asks for edits, revise here and present again.",
+      "type": "Work",
+      "autoApprove": false,
+      "preferredMode": "Standard",
+      "approverConfig": { "method": "Player" },
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate if a behavior in the coverage map cannot be expressed as a deterministic expectation without inventing a prerequisite the change does not establish — ask which boundary the scenario should stop at."
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "simulate-and-triage",
+          "instruction": "Once the reviewer approves the scenario set, simulate it against the change."
+        }
+      ]
+    },
+    {
+      "id": "simulate-and-triage",
+      "name": "Simulate and Triage",
+      "instruction": "You are running the approved scenarios and interpreting what comes back.\n\n## Goal\nSeparate real risk in the change from defects in the scenarios themselves.\n\n## What to do\n- Run the approved scenario set as simulations against the branch the change lives on, not the default branch.\n- For each result, decide which it is: the change genuinely breaks the behavior, the change is fine and the scenario is wrong or under-specified, or the outcome is uncertain because the scenario left something unstated.\n- For every predicted failure, trace it to the specific behavior and code path and state the evidence. Do not report a risk you cannot point at.\n- Note anything the simulation could not assess, and lower your confidence rather than filling the gap.\n\n## Definition of done\nA triage artifact exists listing each scenario, its predicted outcome, your classification, and the evidence behind it. Lead with the risks that matter. If any scenario turned out to be wrong or ambiguous rather than the code, say so explicitly and route back for revision instead of reporting it as a finding.",
+      "type": "Work",
+      "autoApprove": true,
+      "preferredMode": "Pro",
+      "escalationPolicy": {
+        "enabled": false,
+        "guidance": null
+      },
+      "archiveConfig": { "archiveType": "Never" },
+      "nextSteps": [
+        {
+          "stageId": "scenario-drafting",
+          "instruction": "If one or more scenarios were themselves wrong, under-specified, or untestable, go back and revise only those scenarios, then re-simulate."
+        },
+        {
+          "stageId": "coverage-report",
+          "instruction": "Once every scenario has been classified and any scenario defects have been resolved, write the coverage report."
+        }
+      ]
+    },
+    {
+      "id": "coverage-report",
+      "name": "Coverage Report",
+      "instruction": "You are closing out the coverage work.\n\n## Goal\nGive the change owner one artifact that tells them whether it is safe to ship and what is still untested.\n\n## What to do\n- Write the coverage report: what the change does, what is now covered, the risks the simulations surfaced with their evidence, and what remains untested and why.\n- Lead with the verdict. Keep it short and scannable — the reader may be a reviewer skimming under time pressure, not the author of the change.\n- Confirm the scenario playlist is saved so the coverage persists and can be re-run on later changes.\n- Propose any memories worth keeping: a recurring fragile area, a coverage convention the reviewer asked for, or a non-obvious behavior worth recalling on the next change here. Show the exact proposed content and create only what is approved. Update an existing memory rather than adding a near-duplicate.\n- Offer to add reusable reference material to the knowledge base, and add nothing without approval.\n\n## Definition of done\nThe coverage report artifact exists and stands on its own, the scenario playlist is saved, and every proposed memory has either been approved and written or explicitly declined. Nothing is written outside PlayerZero at this stage.",
+      "type": "Terminal",
+      "autoApprove": false,
+      "preferredMode": "Standard",
+      "approverConfig": { "method": "Player" },
+      "escalationPolicy": {
+        "enabled": true,
+        "guidance": "Escalate only if the simulation results contradict the stated intent of the change badly enough that the right next step is a decision about the change itself rather than about test coverage."
+      },
+      "archiveConfig": { "archiveType": "Automatic", "autoArchiveAfterDays": 14 }
+    }
+  ]
+}
