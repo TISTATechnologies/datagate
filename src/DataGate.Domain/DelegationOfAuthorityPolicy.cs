@@ -23,7 +23,10 @@ public sealed class DelegationOfAuthorityPolicy
     {
         var reasons = new List<GateReason>();
 
-        if (run.RowCountDriftPct > DriftThresholdPct) reasons.Add(GateReason.RowCountDrift);
+        // DEMO BUG (Option A): exclusive threshold became inclusive.
+        // Spec: drift of exactly DriftThresholdPct (5.0) must still auto-promote.
+        // Symptom: rowCountDriftPct == 5.0 now goes Pending with RowCountDrift.
+        if (run.RowCountDriftPct >= DriftThresholdPct) reasons.Add(GateReason.RowCountDrift);
         if (run.NullRatePct > NullRateThresholdPct) reasons.Add(GateReason.NullRateSpike);
         if (run.NewColumns.Count > 0) reasons.Add(GateReason.NewColumn);
         if (run.ContainsSensitiveData) reasons.Add(GateReason.SensitiveDataDetected);
