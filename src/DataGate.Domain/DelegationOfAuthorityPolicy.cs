@@ -13,7 +13,10 @@ namespace DataGate.Promotions;
 public sealed class DelegationOfAuthorityPolicy
 {
     // Tunable thresholds. Changing one of these is a PR with a test, not a redeploy of logic.
-    public decimal DriftThresholdPct { get; init; } = 5.0m;
+    // DEMO BUG (Option B): drift ceiling tightened from 5.0 → 0.5.
+    // Spec: steward "Load clean" (~1.2% drift) must auto-promote.
+    // Symptom: clean sample stays Pending with RowCountDrift.
+    public decimal DriftThresholdPct { get; init; } = 0.5m;
     public decimal NullRateThresholdPct { get; init; } = 2.0m;
     public decimal StewardExposureLimit { get; init; } = 250_000m;
     public decimal OwnerExposureLimit { get; init; } = 2_500_000m;
